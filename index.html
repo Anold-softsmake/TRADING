@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trading Business Manager</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">TB</div>
+          <div>
+            <h1>Trading Business</h1>
+            <p>Compounding manager and journal</p>
+          </div>
+        </div>
+        <nav class="nav-tabs" aria-label="Main sections">
+          <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+          <button class="nav-tab" data-tab="trades">Trades</button>
+          <button class="nav-tab" data-tab="cycle">Profit Cycles</button>
+          <button class="nav-tab" data-tab="daily">Daily Journal</button>
+          <button class="nav-tab" data-tab="analytics">Analytics</button>
+          <button class="nav-tab" data-tab="settings">Settings</button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <section class="page-section active" id="dashboard">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Today</p>
+              <h2>Account Command Center</h2>
+            </div>
+            <button class="primary-action" data-open-tab="trades">Record Trade</button>
+          </div>
+
+          <div class="metric-grid" id="dashboardMetrics"></div>
+
+          <div class="content-grid two-columns">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>Current Profit Cycle</h3>
+                <span id="cycleBadge" class="status-badge">Cycle 1</span>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-labels">
+                  <span id="cycleProgressText">$0 / $64</span>
+                  <span id="cycleRemainingText">$64 remaining</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" id="cycleProgressFill"></div>
+                </div>
+              </div>
+              <div class="cycle-actions">
+                <button class="secondary-action" data-open-tab="cycle">Manage Cycle</button>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h3>Recent Trades</h3>
+                <span id="recentTradeCount" class="muted"></span>
+              </div>
+              <div class="compact-list" id="recentTrades"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="page-section" id="trades">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Journal</p>
+              <h2>Record Every Trade</h2>
+            </div>
+          </div>
+
+          <form class="panel form-panel" id="tradeForm">
+            <input type="hidden" id="tradeId">
+            <div class="form-grid">
+              <label>Date
+                <input type="datetime-local" id="tradeDate" required>
+              </label>
+              <label>Session
+                <select id="tradeSession" required>
+                  <option>Asian</option>
+                  <option>London</option>
+                  <option>New York</option>
+                </select>
+              </label>
+              <label>Pair
+                <input id="tradePair" placeholder="XAUUSD" required>
+              </label>
+              <label>Direction
+                <select id="tradeDirection" required>
+                  <option>Buy</option>
+                  <option>Sell</option>
+                </select>
+              </label>
+              <label>Lot Size
+                <input type="number" id="tradeLot" min="0" step="0.01" required>
+              </label>
+              <label>Entry Price
+                <input type="number" id="tradeEntry" step="0.001" required>
+              </label>
+              <label>Exit Price
+                <input type="number" id="tradeExit" step="0.001" required>
+              </label>
+              <label>Stop Loss
+                <input type="number" id="tradeSl" step="0.001">
+              </label>
+              <label>Take Profit
+                <input type="number" id="tradeTp" step="0.001">
+              </label>
+              <label>Risk %
+                <input type="number" id="tradeRisk" min="0" step="0.1">
+              </label>
+              <label>Result
+                <select id="tradeResult" required>
+                  <option>Win</option>
+                  <option>Loss</option>
+                  <option>Break Even</option>
+                </select>
+              </label>
+              <label>Profit/Loss $
+                <input type="number" id="tradePnl" step="0.01" required>
+              </label>
+              <label>Profit/Loss %
+                <input type="number" id="tradePnlPercent" step="0.01">
+              </label>
+              <label>Holding Time
+                <input id="tradeHolding" placeholder="2h 15m">
+              </label>
+              <label>Before Screenshot
+                <input type="file" id="tradeBefore" accept="image/*">
+              </label>
+              <label>After Screenshot
+                <input type="file" id="tradeAfter" accept="image/*">
+              </label>
+            </div>
+
+            <fieldset class="checklist">
+              <legend>Rule Checklist</legend>
+              <label><input type="checkbox" value="Higher timeframe trend confirmed"> Higher timeframe trend confirmed</label>
+              <label><input type="checkbox" value="Liquidity sweep"> Liquidity sweep</label>
+              <label><input type="checkbox" value="Break of Structure (BOS)"> Break of Structure (BOS)</label>
+              <label><input type="checkbox" value="Fair Value Gap (FVG)"> Fair Value Gap (FVG)</label>
+              <label><input type="checkbox" value="Order Block (OB)"> Order Block (OB)</label>
+              <label><input type="checkbox" value="Market Structure Shift (MSS/CHOCH)"> Market Structure Shift (MSS/CHOCH)</label>
+              <label><input type="checkbox" value="Session timing valid"> Session timing valid</label>
+              <label><input type="checkbox" value="News checked"> News checked</label>
+              <label><input type="checkbox" value="Risk <= 2%"> Risk &le; 2%</label>
+              <label><input type="checkbox" value="Risk:Reward >= 1:2"> Risk:Reward &ge; 1:2</label>
+            </fieldset>
+
+            <label class="full-field">Trade Notes and Reflection
+              <textarea id="tradeNotes" rows="7" placeholder="Why did you enter? Did you follow your plan? What did you learn?" required></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button type="button" class="ghost-action" id="resetTradeForm">Clear</button>
+              <button type="submit" class="primary-action">Save Trade</button>
+            </div>
+          </form>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Trade History</h3>
+              <input class="search-input" id="tradeSearch" placeholder="Search pair, notes, checklist">
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Session</th>
+                    <th>Pair</th>
+                    <th>Direction</th>
+                    <th>Result</th>
+                    <th>P/L</th>
+                    <th>Rules</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tradeTable"></tbody>
+              </table>
+            </div>
+            <div class="trade-card-list" id="tradeCards"></div>
+          </div>
+        </section>
+
+        <section class="page-section" id="cycle">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Compounding</p>
+              <h2>Profit Cycle Manager</h2>
+            </div>
+          </div>
+
+          <div class="content-grid two-columns">
+            <form class="panel form-panel" id="cycleSettingsForm">
+              <div class="panel-header">
+                <h3>Current Plan</h3>
+              </div>
+              <div class="form-grid">
+                <label>Starting Balance
+                  <input type="number" id="startingBalance" step="0.01" min="0">
+                </label>
+                <label>Profit Target
+                  <input type="number" id="profitTarget" step="0.01" min="0">
+                </label>
+                <label>Withdrawal Target
+                  <input type="number" id="withdrawalTarget" step="0.01" min="0">
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="primary-action">Update Plan</button>
+              </div>
+            </form>
+
+            <form class="panel form-panel" id="completeCycleForm">
+              <div class="panel-header">
+                <h3>Complete Current Cycle</h3>
+              </div>
+              <div class="cycle-summary" id="cycleCompletionSummary"></div>
+              <label class="full-field">Cycle Reflection
+                <textarea id="cycleRemarks" rows="6" placeholder="What helped you reach the target? Mistakes repeated? Confidence level?" required></textarea>
+              </label>
+              <button type="submit" class="primary-action">Mark Target Achieved</button>
+            </form>
+          </div>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Completed Cycles</h3>
+            </div>
+            <div class="compact-list" id="cycleHistory"></div>
+          </section>
+        </section>
+
+        <section class="page-section" id="daily">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Reflection</p>
+              <h2>Daily Journal</h2>
+            </div>
+          </div>
+          <form class="panel form-panel" id="dailyForm">
+            <input type="hidden" id="dailyId">
+            <div class="form-grid">
+              <label>Date
+                <input type="date" id="dailyDate" required>
+              </label>
+              <label>Daily P/L $
+                <input type="number" id="dailyPnl" step="0.01">
+              </label>
+            </div>
+            <label class="full-field">Emotions
+              <textarea id="dailyEmotions" rows="3"></textarea>
+            </label>
+            <label class="full-field">Rules and News
+              <textarea id="dailyRules" rows="3" placeholder="Did you follow rules? Any news events?"></textarea>
+            </label>
+            <label class="full-field">Lessons and Tomorrow's Goals
+              <textarea id="dailyLessons" rows="5"></textarea>
+            </label>
+            <div class="form-actions">
+              <button type="button" class="ghost-action" id="resetDailyForm">Clear</button>
+              <button type="submit" class="primary-action">Save Daily Summary</button>
+            </div>
+          </form>
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Journal History</h3>
+            </div>
+            <div class="compact-list" id="dailyHistory"></div>
+          </section>
+        </section>
+
+        <section class="page-section" id="analytics">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Performance</p>
+              <h2>Analytics</h2>
+            </div>
+          </div>
+          <div class="metric-grid" id="analyticsMetrics"></div>
+          <div class="content-grid two-columns">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>Cumulative Growth</h3>
+              </div>
+              <canvas id="growthChart" height="220"></canvas>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>Checklist Intelligence</h3>
+              </div>
+              <div class="compact-list" id="checklistInsights"></div>
+            </section>
+          </div>
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Monthly and Weekly Profit</h3>
+            </div>
+            <div class="compact-list" id="periodStats"></div>
+          </section>
+        </section>
+
+        <section class="page-section" id="settings">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Data</p>
+              <h2>Backup and Reset</h2>
+            </div>
+          </div>
+          <section class="panel">
+            <div class="button-row">
+              <button class="secondary-action" id="exportData">Export Data</button>
+              <label class="secondary-action import-label">Import Data
+                <input type="file" id="importData" accept="application/json">
+              </label>
+              <button class="danger-action" id="resetData">Reset App</button>
+            </div>
+            <p class="muted">Your data is stored locally in this browser. Export a backup regularly.</p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <template id="emptyStateTemplate">
+      <div class="empty-state">No records yet.</div>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

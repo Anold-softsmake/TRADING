@@ -1,0 +1,139 @@
+symbol: XAUUSD
+
+timeframes:
+  execution: M15
+  higher_tf_primary: H4
+  higher_tf_secondary: H1
+  refinement: M5
+
+swing:
+  left_bars: 3
+  right_bars: 3
+  min_distance_points: 50
+  use_wicks: true
+
+liquidity:
+  equal_high_tolerance_points: 80
+  equal_low_tolerance_points: 80
+  min_touches: 2
+  max_age_bars: 500
+  require_unmitigated: false
+
+sweep:
+  min_penetration_points: 30
+  max_confirmation_bars: 3
+  require_close_back_inside: true
+  require_displacement: true
+  displacement_atr_multiple: 1.2
+
+structure:
+  break_requires_close: true
+  min_break_points: 20
+  use_body_close: true
+  displacement_required_for_mss: true
+  displacement_atr_multiple: 1.2
+
+order_block:
+  max_cluster_candles: 3
+  require_displacement: true
+  displacement_atr_multiple: 1.2
+  require_structure_break: true
+  prefer_after_sweep: true
+  max_touches: 1
+  freshness_max_bars: 100
+  use_body_only: false
+
+fvg:
+  min_size_points: 30
+  require_displacement: true
+  displacement_atr_multiple: 1.2
+  mitigation_mode: wick_touch
+  max_retests: 2
+
+confluence:
+  minimum_score: 7
+  weights:
+    liquidity_identified: 2
+    liquidity_sweep: 2
+    bos_choch_mss: 2
+    order_block: 2
+    fair_value_gap: 1
+    strong_displacement: 1
+    session_confirmation: 1
+    htf_alignment: 2
+
+entry_zone:
+  require_ob_or_fvg: true
+  prefer_ob_fvg_overlap: true
+  fallback_to_ob: true
+  fallback_to_fvg: true
+  reject_if_no_overlap: false
+  max_zone_size_atr_multiple: 1.0
+
+invalidation:
+  method: beyond_sweep_extreme
+  buffer_points: 50
+  atr_buffer_enabled: false
+  atr_buffer_multiple: 0.2
+
+sessions:
+  enabled: false
+  timezone_display: Africa/Nairobi
+  london_enabled: true
+  new_york_enabled: true
+  overlap_enabled: true
+  windows:
+    - name: london
+      start: "10:00"
+      end: "19:00"
+      enabled: true
+    - name: new_york
+      start: "15:00"
+      end: "00:00"
+      enabled: true
+    - name: overlap
+      start: "15:00"
+      end: "19:00"
+      enabled: true
+
+risk:
+  starting_equity: 10000
+  risk_per_setup_pct: 0.5
+  max_daily_loss_pct: 2
+  max_weekly_loss_pct: 5
+  max_simultaneous_setups: 1
+  max_trades_day: 3
+  max_consecutive_losses: 3
+
+execution:
+  mode: DEMO
+  allow_live: false
+  dry_run: false
+  broker: FBS
+  platform: MT5
+  max_spread_points: 50
+  max_deviation_points: 20
+  kill_switch_file: config/KILL_SWITCH
+  log_file: logs/execution.log
+  signal_log_file: logs/demo_signals.jsonl
+  poll_seconds: 15
+
+tradingview:
+  host: 127.0.0.1
+  port: 8787
+  path: /webhook
+  secret: K02rrlj6MtvpBTHo9xxBWZT5_2kF4Z2I
+  secret_env: TRADINGVIEW_WEBHOOK_SECRET
+  allowed_symbols: ["XAUUSD", "GOLD"]
+  require_min_score: true
+
+backtest:
+  entry_model: single_entry
+  entry_location: zone_midpoint
+  max_entry_wait_bars: 12
+  max_hold_bars: 96
+  tp_r_multiples: [1, 2, 3]
+  tp_allocations: [0.3, 0.3, 0.4]
+  profit_management: move_to_breakeven_after_tp1
+  conservative_same_candle: true
+  require_session_filter: false

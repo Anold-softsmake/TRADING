@@ -1,0 +1,124 @@
+//@version=5
+indicator("Amin XAUUSD TV Bridge", overlay=true, max_labels_count=200, max_boxes_count=50)
+
+leftBars = input.int(3, "Swing left bars", minval=1)
+rightBars = input.int(3, "Swing right bars", minval=1)
+eqTol = input.float(0.80, "Equal high/low tolerance")
+minPen = input.float(0.30, "Sweep penetration")
+minFvg = input.float(0.30, "Minimum FVG size")
+dispMult = input.float(1.2, "Displacement ATR multiple")
+minScore = input.int(7, "Minimum confluence", minval=1)
+bufferPts = input.float(0.50, "Stop buffer")
+webhookSecret = input.string("K02rrlj6MtvpBTHo9xxBWZT5_2kF4Z2I", "Webhook secret (same as bot config)")
+
+atrVal = ta.atr(14)
+ph = ta.pivothigh(high, leftBars, rightBars)
+pl = ta.pivotlow(low, leftBars, rightBars)
+
+var float lastHigh = na
+var float prevHigh = na
+var float lastLow = na
+var float prevLow = na
+var bool equalHighs = false
+var bool equalLows = false
+
+if not na(ph)
+    prevHigh := lastHigh
+    lastHigh := ph
+    equalHighs := not na(prevHigh) and math.abs(lastHigh - prevHigh) <= eqTol
+if not na(pl)
+    prevLow := lastLow
+    lastLow := pl
+    equalLows := not na(prevLow) and math.abs(lastLow - prevLow) <= eqTol
+
+bosUp = not na(lastHigh) and close > lastHigh and close[1] <= lastHigh
+bosDown = not na(lastLow) and close < lastLow and close[1] >= lastLow
+bullSweep = not na(lastHigh) and high > lastHigh + minPen and close < lastHigh
+bearSweep = not na(lastLow) and low < lastLow - minPen and close > lastLow
+bullFvg = high[2] < low
+bearFvg = low[2] > high
+fvgSize = bullFvg ? low - high[2] : bearFvg ? low[2] - high : 0.0
+validBullFvg = bullFvg and fvgSize >= minFvg
+validBearFvg = bearFvg and fvgSize >= minFvg
+bullDisp = close > open and math.abs(close - open) >= atrVal * dispMult
+bearDisp = close < open and math.abs(close - open) >= atrVal * dispMult
+bullOB = bosUp or bullDisp
+bearOB = bosDown or bearDisp
+
+h1Close = request.security(syminfo.tickerid, "60", close, lookahead=barmerge.lookahead_off)
+h4Close = request.security(syminfo.tickerid, "240", close, lookahead=barmerge.lookahead_off)
+h1Up = h1Close > h1Close[3]
+h4Up = h4Close > h4Close[3]
+htfBull = h1Up and h4Up
+htfBear = (not h1Up) and (not h4Up)
+
+bullScore = 0
+bullScore += equalHighs ? 2 : 0
+bullScore += bullSweep ? 2 : 0
+bullScore += bosUp ? 2 : 0
+bullScore += bullOB ? 2 : 0
+bullScore += validBullFvg ? 1 : 0
+bullScore += bullDisp ? 1 : 0
+bullScore += htfBull ? 2 : 0
+
+bearScore = 0
+bearScore += equalLows ? 2 : 0
+bearScore += bearSweep ? 2 : 0
+bearScore += bosDown ? 2 : 0
+bearScore += bearOB ? 2 : 0
+bearScore += validBearFvg ? 1 : 0
+bearScore += bearDisp ? 1 : 0
+bearScore += htfBear ? 2 : 0
+
+bullSetup = bullScore >= minScore and (bullSweep or bosUp) and (validBullFvg or bullOB)
+bearSetup = bearScore >= minScore and (bearSweep or bosDown) and (validBearFvg or bearOB)
+newBull = bullSetup and not bullSetup[1]
+newBear = bearSetup and not bearSetup[1]
+
+bullZoneLow = validBullFvg ? high[2] : low
+bullZoneHigh = validBullFvg ? low : math.max(open, close)
+bearZoneLow = validBearFvg ? high : math.min(open, close)
+bearZoneHigh = validBearFvg ? low[2] : high
+bullStop = nz(lastLow, low) - bufferPts
+bearStop = nz(lastHigh, high) + bufferPts
+
+plotshape(newBull, title="Buy", style=shape.triangleup, location=location.belowbar, color=color.new(color.teal, 0), size=size.small)
+plotshape(newBear, title="Sell", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.small)
+plot(lastHigh, "Last swing high", color.new(color.red, 70))
+plot(lastLow, "Last swing low", color.new(color.teal, 70))
+
+bullJson = '{' +
+     '"secret":"' + webhookSecret + '",' +
+     '"source":"tradingview",' +
+     '"symbol":"' + syminfo.ticker + '",' +
+     '"timeframe":"' + timeframe.period + '",' +
+     '"action":"buy",' +
+     '"price":' + str.tostring(close, "#.##") + ',' +
+     '"entry":' + str.tostring((bullZoneLow + bullZoneHigh) / 2, "#.##") + ',' +
+     '"stop":' + str.tostring(bullStop, "#.##") + ',' +
+     '"zone_low":' + str.tostring(bullZoneLow, "#.##") + ',' +
+     '"zone_high":' + str.tostring(bullZoneHigh, "#.##") + ',' +
+     '"score":' + str.tostring(bullScore) + ',' +
+     '"time":"' + str.format_time(time, "yyyy-MM-dd'T'HH:mm:ss") + '"}'
+
+bearJson = '{' +
+     '"secret":"' + webhookSecret + '",' +
+     '"source":"tradingview",' +
+     '"symbol":"' + syminfo.ticker + '",' +
+     '"timeframe":"' + timeframe.period + '",' +
+     '"action":"sell",' +
+     '"price":' + str.tostring(close, "#.##") + ',' +
+     '"entry":' + str.tostring((bearZoneLow + bearZoneHigh) / 2, "#.##") + ',' +
+     '"stop":' + str.tostring(bearStop, "#.##") + ',' +
+     '"zone_low":' + str.tostring(bearZoneLow, "#.##") + ',' +
+     '"zone_high":' + str.tostring(bearZoneHigh, "#.##") + ',' +
+     '"score":' + str.tostring(bearScore) + ',' +
+     '"time":"' + str.format_time(time, "yyyy-MM-dd'T'HH:mm:ss") + '"}'
+
+if newBull
+    alert(bullJson, alert.freq_once_per_bar_close)
+if newBear
+    alert(bearJson, alert.freq_once_per_bar_close)
+
+alertcondition(newBull, title="Amin XAUUSD Buy", message="BUY XAUUSD")
+alertcondition(newBear, title="Amin XAUUSD Sell", message="SELL XAUUSD")
